@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="Vektis Editor"
+            extensions="asc,txt"
+            icon="icons/sample.gif"
+            contributorClass="com.wijlens.vektis.editors.VektisEditorContributor"
+            class="com.wijlens.vektis.editors.VektisEditor"
+            id="com.wijlens.vektis.editors.VektisEditor">
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            name="Vektis"
+            id="com.wijlens.vektis">
+      </category>
+      <wizard
+            name="Vektis"
+            icon="icons/sample.gif"
+            category="com.wijlens.vektis"
+            class="com.wijlens.vektis.viewer.VektisWizard"
+            id="com.wijlens.vektis.viewer.Vektis">
+      </wizard>
+   </extension>
+
+</plugin>
