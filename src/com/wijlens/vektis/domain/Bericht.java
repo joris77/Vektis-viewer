@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -27,6 +28,16 @@ public class Bericht extends BerichtKnoop {
 	public Bericht(InputStream berichtBestand) {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				berichtBestand));
+		maakBericht(reader);
+	}
+	
+	public Bericht(String bericht) {
+		BufferedReader reader = new BufferedReader(new StringReader(
+				bericht));
+		maakBericht(reader);
+	}
+
+	private void maakBericht(BufferedReader reader) {
 		try {
 			Stack<BerichtKnoop> ouder = new Stack<BerichtKnoop>();
 			ouder.push(this);
@@ -73,14 +84,7 @@ public class Bericht extends BerichtKnoop {
 		return max;
 	}
 
-	public GegevensElement getElement(int rowIndex, int columnIndex) {
-		Record record = (Record) alleRecords().get(rowIndex);
-		if (columnIndex < record.getNumberOfLineElements()) {
-			return record.getElement(columnIndex);
-		} else {
-			return null;
-		}
-	}
+	
 	public List<Record> alleRecords() {
 		List<Record> list = new ArrayList<Record>();
 		voegToeAanLijst(list);
@@ -97,8 +101,8 @@ public class Bericht extends BerichtKnoop {
 
 	        for (final Record line : alleRecords()) {
 	            StringBuilder recordTekst = new StringBuilder("");
-	            for (GegevensElement gegevensElement : line.getElementen()) {
-	                String value = gegevensElement.getValue();
+	            for (GegevensElement gegevensElement : line.elementen()) {
+	                String value = gegevensElement.waarde();
 
 	                recordTekst.append(value);
 	            }
@@ -111,6 +115,14 @@ public class Bericht extends BerichtKnoop {
 
 	        return berichtInhoud;
 	    
+	}
+	
+	public void addListener(GegevensElementListener listener){
+		for (Record record : alleRecords()) {
+			for (GegevensElement element : record.elementen()) {
+				element.addListener(listener);
+			}
+		}
 	}
 
 }

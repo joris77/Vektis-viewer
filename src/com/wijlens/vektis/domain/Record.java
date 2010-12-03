@@ -5,10 +5,9 @@
 
 package com.wijlens.vektis.domain;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.wijlens.vektis.ElementIdentificatie;
 
@@ -18,7 +17,7 @@ import com.wijlens.vektis.ElementIdentificatie;
  */
 public class Record extends BerichtKnoop {
 
-	private Map<ElementIdentificatie, GegevensElement> gegevensElementen = new LinkedHashMap<ElementIdentificatie, GegevensElement>();
+	private LinkedHashMap<ElementIdentificatie, GegevensElement> gegevensElementen = new LinkedHashMap<ElementIdentificatie, GegevensElement>();
 
 	private RecordDefinitie recordDefinitie;
 
@@ -37,24 +36,20 @@ public class Record extends BerichtKnoop {
 			} catch (StringIndexOutOfBoundsException e) {
 				value = elementDefinitie.correctSize("");
 			}
-			add(new GegevensElement(elementDefinitie, value));
+			add(new GegevensElement(this,elementDefinitie, value));
 		}
 	}
 
 	void add(GegevensElement gegevensElement) {
-		gegevensElementen.put(gegevensElement.getId(), gegevensElement);
+		gegevensElementen.put(gegevensElement.id(), gegevensElement);
 	}
 
-	public GegevensElement getElement(int index) {
-		return (GegevensElement) getElementen().toArray()[index];
+	public GegevensElement element(int index) {
+		return (GegevensElement) elementen().toArray()[index];
 	}
 
-	public Collection<GegevensElement> getElementen() {
-		return gegevensElementen.values();
-	}
-
-	int getNumberOfLineElements() {
-		return recordDefinitie.aantalElementen();
+	public List<GegevensElement> elementen() {
+		return new ArrayList<GegevensElement>(gegevensElementen.values());
 	}
 
 	public boolean isOuderVan(String regel) {

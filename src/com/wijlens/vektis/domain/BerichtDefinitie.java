@@ -5,6 +5,7 @@
 
 package com.wijlens.vektis.domain;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,9 @@ public class BerichtDefinitie extends BerichtDefinitieKnoop{
     }
 
 	public List<RecordDefinitie> alleRecordDefinities() {
-		return null;
+		List<RecordDefinitie> list = new ArrayList<RecordDefinitie>();
+		voegToeAanLijst(list);
+		return list;
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.wijlens.vektis;
+package com.wijlens.vektis.domain;
 
 import junit.framework.Assert;
 
@@ -31,9 +31,9 @@ public class ElementTest {
     @Test
     public void testCorrectSize() {
         elementDefinitie = new ElementDefinitie(null, null, "1", "1", null);
-        gegevensElement = new GegevensElement(elementDefinitie, "d");
+        gegevensElement = new GegevensElement(null,elementDefinitie, "d");
         
-        String result = gegevensElement.correctSize("dd");
+        String result = gegevensElement.corrigeerLengte("dd");
         Assert.assertEquals(result,"d");
     }
 

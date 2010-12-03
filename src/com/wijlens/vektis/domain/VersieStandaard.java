@@ -20,10 +20,6 @@ public class VersieStandaard {
         this.subversie = subversie;
     }
 
-    public String getBestandsnaamConfiguratieBestand(){
-        return standaard.getStandaardCode() + "V" + versie + subversie + ".xls";
-    }
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -63,5 +59,15 @@ public class VersieStandaard {
 		return true;
 	}
     
+    public Standaard standaard(){
+    	return standaard;
+    }
     
+    public String versie(){
+    	return versie;
+    }
+    
+    public String subversie(){
+    	return subversie;
+    }
 }

@@ -2,6 +2,7 @@ package com.wijlens.vektis.domain;
 
 import java.io.InputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class BerichtDefinitieKnoop {
@@ -47,6 +48,11 @@ public abstract class BerichtDefinitieKnoop {
 		return result;
 	}
 
+	protected void voegToeAanLijst(List<RecordDefinitie> list) {
+		for (RecordDefinitie kind : kinderen.values()) {
+			kind.voegToeAanLijst(list);
+		}
+	}
 
 
 	@Override
@@ -79,5 +85,11 @@ public abstract class BerichtDefinitieKnoop {
 
 
 	public abstract BerichtDefinitie berichtDefinitie();
+
+
+
+	public VersieStandaard versieStandaard() {
+		return berichtDefinitie().versieStandaard();
+	}
 
 }

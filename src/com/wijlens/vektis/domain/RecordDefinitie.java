@@ -53,7 +53,12 @@ public class RecordDefinitie extends BerichtDefinitieKnoop{
 		return this.id.toString();
 	}
 	
-	
+	@Override
+	public void voegToeAanLijst(List<RecordDefinitie> list) {
+		list.add(this);
+		super.voegToeAanLijst(list);
+	}
+
 	
 	
 }

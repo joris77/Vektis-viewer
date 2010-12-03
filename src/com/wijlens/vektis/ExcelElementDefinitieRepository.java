@@ -44,18 +44,24 @@ public class ExcelElementDefinitieRepository implements ElementRepository{
 	public LinkedHashMap<ElementIdentificatie, ElementDefinitie> zoekElementenVoorRecord(
 			BerichtDefinitieKnoop recordDefinitie) {
 		LinkedHashMap<ElementIdentificatie, ElementDefinitie> elementDefinities = new LinkedHashMap<ElementIdentificatie, ElementDefinitie>();
-		for (VektisConfigSheet vcs = new VektisConfigSheet(Utils.getFile(recordDefinitie.berichtDefinitie().versieStandaard().getBestandsnaamConfiguratieBestand())); vcs.hasNext(); vcs.next()) {
+		String bestandsnaamConfiguratieBestand = bestandsnaamConfiguratieBestand(recordDefinitie.versieStandaard());
+		VektisConfigSheet vcs = new VektisConfigSheet(Utils.getFile(bestandsnaamConfiguratieBestand));
+		 BerichtKnoopIdentificatie id = recordDefinitie.getId();
+		 
+		while (vcs.hasNext()) {
             final String lineId = vcs.getLineId();
-            if (new BerichtKnoopIdentificatie(lineId).equals(recordDefinitie.getId())) {
+           
+			if (new BerichtKnoopIdentificatie(lineId).equals(id)) {
+            	ElementIdentificatie elementIdentificatie = new ElementIdentificatie(vcs.getElementId());
+                elementDefinities.put(elementIdentificatie, new ElementDefinitie(elementIdentificatie, vcs.getElementName(), vcs.getElementLength(), vcs.getElementEndPosition(), vcs.getType()));
             }
-            ElementIdentificatie elementIdentificatie = new ElementIdentificatie(vcs.getElementId());
-            elementDefinities.put(elementIdentificatie, new ElementDefinitie(elementIdentificatie, vcs.getElementName(), vcs.getElementLength(), vcs.getElementEndPosition(), vcs.getType()));
-
+            vcs.next();
         }
 		return elementDefinities;
 	}
 
-
-
+	public String bestandsnaamConfiguratieBestand(VersieStandaard versieStandaard) {
+		return versieStandaard.standaard().getStandaardCode() + "V" + versieStandaard.versie() + versieStandaard.subversie() + ".xls";
+	}
 	
 }

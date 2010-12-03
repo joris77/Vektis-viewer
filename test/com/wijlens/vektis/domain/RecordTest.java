@@ -4,16 +4,19 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.wijlens.vektis.Utils;
+
 public class RecordTest {
 	
-	private 
-
+	
 	@Test
 	public void testIsBroertjeVan() {
-		BerichtKnoop ouder;
-		RecordDefinitie recordDefinitie = new RecordDefinitie(id, ouder);
+		BerichtDefinitie berichtDefinitie = new BerichtDefinitie(new VersieStandaard("MZ301", "01", "03"));
+		RecordDefinitie recordDefinitie = new RecordDefinitie(new BerichtKnoopIdentificatie("99"), berichtDefinitie);
 		String regel = "02";
-		Record voorloopRecord = new Record(ouder, recordDefinitie, regel )
+		Bericht bericht = new Bericht(Utils.getFile("MZ301.asc"));
+		Record voorloopRecord = new Record(bericht, recordDefinitie, regel);
+		voorloopRecord.isBroertjeVan(regel);
 	}
 
 }

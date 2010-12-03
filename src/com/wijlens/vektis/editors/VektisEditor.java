@@ -7,12 +7,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.StringTokenizer;
 
+import javax.swing.CellEditor;
+
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -26,11 +30,17 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FontDialog;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.ui.*;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.ide.IDE;
+
+import com.wijlens.vektis.domain.Bericht;
+import com.wijlens.vektis.domain.GegevensElement;
+import com.wijlens.vektis.domain.GegevensElementListener;
 
 /**
  * An example showing how to create a multi-page editor.
@@ -46,11 +56,15 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	/** The text editor used in page 0. */
 	private TextEditor editor;
 
-	/** The font chosen in page 1. */
-	private Font font;
+	private TreeViewer treeViewer;
 
-	/** The text widget used in page 2. */
-	private StyledText text;
+	private VektisEditorContentProvider treeContentProvider;
+
+	private Tree tree;
+	
+	private boolean isPageModified;
+
+	private Bericht bericht;
 	/**
 	 * Creates a multi-page editor example.
 	 */
@@ -81,27 +95,14 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	 */
 	void createPage1() {
 
-		Composite composite = new Composite(getContainer(), SWT.NONE);
+		treeViewer = new TreeViewer(getContainer(),SWT.MULTI);
 		
+		tree = treeViewer.getTree();
 		
-		
+		tree.setHeaderVisible(true);
 
-		int index = addPage(composite);
+		int index = addPage(tree);
 		setPageText(index, "Document");
-	}
-	/**
-	 * Creates page 2 of the multi-page editor,
-	 * which shows the sorted text.
-	 */
-	void createPage2() {
-		Composite composite = new Composite(getContainer(), SWT.NONE);
-		FillLayout layout = new FillLayout();
-		composite.setLayout(layout);
-		text = new StyledText(composite, SWT.H_SCROLL | SWT.V_SCROLL);
-		text.setEditable(false);
-
-		int index = addPage(composite);
-		setPageText(index, "Preview");
 	}
 	/**
 	 * Creates the pages of the multi-page editor.
@@ -109,7 +110,107 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	protected void createPages() {
 		createPage0();
 		createPage1();
-		createPage2();
+		
+		initTreeContent();
+	}
+	private void initTreeContent() {
+		treeContentProvider = new VektisEditorContentProvider();
+		treeViewer.setContentProvider(treeContentProvider);
+		treeViewer.setLabelProvider(new VektisEditorLabelProvider());
+		treeViewer.setCellModifier(new VektisEditorCellModifier(this,treeViewer));
+		
+		//treeViewer.setInput(new Bericht());
+		treeViewer.getTree().getDisplay().asyncExec(new Runnable() {
+			
+			@Override
+			public void run() {
+				updateTreeFromTextEditor();
+			}
+
+			
+		});
+		treeViewer.setAutoExpandLevel(TreeViewer.ALL_LEVELS);
+	}
+	
+	private void updateTreeFromTextEditor() {
+		bericht = new Bericht(editor.getDocumentProvider().getDocument(editor.getEditorInput()).get());
+		
+		bericht.addListener(new GegevensElementListener() {
+			
+			@Override
+			public void wijziging(GegevensElement gegevensElement, String oldValue,
+					String newValue) {
+				treeViewer.update(gegevensElement.record(), new String[]{gegevensElement.record().elementen().indexOf(gegevensElement) + ""});
+				treeModified();
+			}
+		});
+		
+		int maxLineSize = bericht.getMaxLineSize();
+		String[] columnProperties = new String[maxLineSize];
+		TextCellEditor[] cellEditors = new TextCellEditor[maxLineSize];
+		for (int i = 0; i < maxLineSize; i++) {
+			TreeColumn treeColumn = new TreeColumn(tree, SWT.NONE);
+			treeColumn.setText(i + 1 + "");
+			treeColumn.setWidth(100);
+			
+			columnProperties[i] = i + "";
+			
+			cellEditors[i] = new TextCellEditor(tree);
+		}
+		treeViewer.setCellEditors(cellEditors);
+		treeViewer.setColumnProperties(columnProperties);
+		treeViewer.setInput(bericht);
+		
+	}
+	
+	protected void treeModified() {
+		boolean wasDirty = isDirty();
+		
+		isPageModified = true;
+		
+		if(!wasDirty){
+			firePropertyChange(IEditorPart.PROP_DIRTY);
+		}
+	}
+	
+	
+	
+	@Override
+	protected void handlePropertyChange(int propertyId) {
+		if(propertyId == IEditorPart.PROP_DIRTY){
+			isPageModified = isDirty();
+		}
+		super.handlePropertyChange(propertyId);
+	}
+	
+	
+	
+	@Override
+	public boolean isDirty() {
+		return isPageModified || super.isDirty();
+	}
+	
+	protected void pageChange(int newPageIndex){
+		switch(newPageIndex){
+		case 0 :
+			if(isDirty()){
+				updateTextEditorFromTree();
+			}
+			break;
+		case 1 :
+			if(isPageModified){
+				updateTreeFromTextEditor();
+				
+			}
+			break;
+		}
+		isPageModified = false;
+		super.pageChange(newPageIndex);
+	}
+	
+	private void updateTextEditorFromTree() {
+		editor.getDocumentProvider().getDocument(editor.getEditorInput()).set(bericht.parse());
+		
 	}
 	/**
 	 * The <code>MultiPageEditorPart</code> implementation of this 
@@ -124,7 +225,14 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	 * Saves the multi-page editor's document.
 	 */
 	public void doSave(IProgressMonitor monitor) {
+		updateTextWhenTreeIsModified();
 		getEditor(0).doSave(monitor);
+	}
+	private void updateTextWhenTreeIsModified() {
+		if(getActivePage()== 1 && isPageModified){
+			updateTextEditorFromTree();
+		}
+		isPageModified =false;
 	}
 	/**
 	 * Saves the multi-page editor's document as another file.
@@ -132,6 +240,7 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	 * to correspond to the nested editor's.
 	 */
 	public void doSaveAs() {
+		updateTextWhenTreeIsModified();
 		IEditorPart editor = getEditor(0);
 		editor.doSaveAs();
 		setPageText(0, editor.getTitle());
@@ -160,16 +269,8 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	public boolean isSaveAsAllowed() {
 		return true;
 	}
-	/**
-	 * Calculates the contents of page 2 when the it is activated.
-	 */
-	@Override
-	protected void pageChange(int newPageIndex) {
-		super.pageChange(newPageIndex);
-		if (newPageIndex == 2) {
-			sortWords();
-		}
-	}
+	
+	
 	/**
 	 * Closes all project files on project close.
 	 */
@@ -187,42 +288,5 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 				}            
 			});
 		}
-	}
-	/**
-	 * Sets the font related data to be applied to the text in page 2.
-	 */
-	void setFont() {
-		FontDialog fontDialog = new FontDialog(getSite().getShell());
-		fontDialog.setFontList(text.getFont().getFontData());
-		FontData fontData = fontDialog.open();
-		if (fontData != null) {
-			if (font != null)
-				font.dispose();
-			font = new Font(text.getDisplay(), fontData);
-			text.setFont(font);
-		}
-	}
-	/**
-	 * Sorts the words in page 0, and shows them in page 2.
-	 */
-	void sortWords() {
-
-		String editorText =
-			editor.getDocumentProvider().getDocument(editor.getEditorInput()).get();
-
-		StringTokenizer tokenizer =
-			new StringTokenizer(editorText, " \t\n\r\f!@#\u0024%^&*()-_=+`~[]{};:'\",.<>/?|\\");
-		ArrayList editorWords = new ArrayList();
-		while (tokenizer.hasMoreTokens()) {
-			editorWords.add(tokenizer.nextToken());
-		}
-
-		Collections.sort(editorWords, Collator.getInstance());
-		StringWriter displayText = new StringWriter();
-		for (int i = 0; i < editorWords.size(); i++) {
-			displayText.write(((String) editorWords.get(i)));
-			displayText.write(System.getProperty("line.separator"));
-		}
-		text.setText(displayText.toString());
 	}
 }

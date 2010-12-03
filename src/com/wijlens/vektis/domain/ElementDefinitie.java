@@ -48,7 +48,7 @@ public class ElementDefinitie {
         return eindpositie - lengte;
     }
 
-    public VektisType getType() {
+    public VektisType type() {
         return type;
     }
 
@@ -57,7 +57,7 @@ public class ElementDefinitie {
             return StringUtils.substring(newValue, 0, getLengte());
         }
         if (newValue.length() < getLengte()) {
-            if (getType().equals(VektisType.NUMERIC)) {
+            if (type().equals(VektisType.NUMERIC)) {
                 return StringUtils.leftPad(newValue, getLengte(), "0");
             } else {
                 return StringUtils.rightPad(newValue, getLengte(), " ");

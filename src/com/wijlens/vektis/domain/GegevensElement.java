@@ -4,6 +4,9 @@
  */
 package com.wijlens.vektis.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 
 import com.wijlens.vektis.ElementIdentificatie;
@@ -15,45 +18,52 @@ import com.wijlens.vektis.ElementIdentificatie;
 public class GegevensElement {
 
     private final ElementDefinitie elementDefinitie;
-    public String value;
+    private String waarde;
+    private List<GegevensElementListener> listeners = new ArrayList<GegevensElementListener>();
+	private final Record record;
 
-    public String getValue() {
-        return value;
+    public String waarde() {
+        return waarde;
     }
 
-    GegevensElement(ElementDefinitie lineElementConfig, String value) {
-        this.elementDefinitie = lineElementConfig;
-        this.value = value;
+    GegevensElement(Record record,ElementDefinitie elementDefinitie, String value) {
+        this.record = record;
+		this.elementDefinitie = elementDefinitie;
+        this.waarde = value;
     }
 
-    public ElementIdentificatie getId() {
+    public ElementIdentificatie id() {
         return elementDefinitie.elementIdentificatie();
     }
 
-    public void setValue(String aValue) {
-        this.value = aValue;
+    public void wijzig(String newValue) {
+    	String oldValue = this.waarde;
+        this.waarde = newValue;
+        for (GegevensElementListener listener : listeners) {
+			listener.wijziging(this,oldValue, newValue);
+		}
     }
 
-    public String getLabel() {
+    public String label() {
         return elementDefinitie.elementIdentificatie() + " " + elementDefinitie.getNaam();
     }
 
-    public int getLength() {
+    public int lengte() {
         return elementDefinitie.getLengte();
     }
 
-    public VektisType getType() {
-        return elementDefinitie.getType();
+    public VektisType type() {
+        return elementDefinitie.type();
     }
 
-    public String correctSize(String newValue) {
+    public String corrigeerLengte(String newValue) {
         return elementDefinitie.correctSize(newValue);
     }
 
     
 
-    public boolean isValid(String value) {
-        if(VektisType.NUMERIC.equals(elementDefinitie.getType()) && !StringUtils.isNumeric(value)){
+    public boolean isGeldig(String value) {
+        if(VektisType.NUMERIC.equals(elementDefinitie.type()) && !StringUtils.isNumeric(value)){
             return false;
         }else{
             return true;
@@ -61,6 +71,14 @@ public class GegevensElement {
     }
     
     public String toString(){
-    	return elementDefinitie + " " + value;
+    	return elementDefinitie + " " + waarde;
     }
+    
+    public void addListener(GegevensElementListener gegevensElementListener){
+    	listeners.add(gegevensElementListener);
+    }
+
+	public Record record() {
+		return record;
+	}
 }
