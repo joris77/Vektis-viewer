@@ -1,46 +1,36 @@
 package com.wijlens.vektis.editors;
 
 
-import java.io.StringWriter;
-import java.text.Collator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.StringTokenizer;
+import java.util.List;
 
-import javax.swing.CellEditor;
-
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.viewers.ColumnViewerToolTipSupport;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FontDialog;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
-import org.eclipse.ui.*;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
-import org.eclipse.ui.ide.IDE;
 
 import com.wijlens.vektis.domain.Bericht;
 import com.wijlens.vektis.domain.GegevensElement;
 import com.wijlens.vektis.domain.GegevensElementListener;
+import com.wijlens.vektis.domain.Record;
 
 /**
  * An example showing how to create a multi-page editor.
@@ -100,6 +90,26 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 		tree = treeViewer.getTree();
 		
 		tree.setHeaderVisible(true);
+		
+		tree.addListener(SWT.MouseHover, new Listener() {
+		      public void handleEvent(Event event) {
+		        Point point = new Point(event.x, event.y);
+		        ViewerCell cell = treeViewer.getCell(point);
+		        if (cell != null) {
+		        	Object element = cell.getElement();
+		    		String waarde = "";
+		    		if (element instanceof Record) {
+		    			List<GegevensElement> elementen = ((Record) element).elementen();
+		    			if (cell.getColumnIndex() < elementen.size()) {
+		    				waarde = elementen.get(cell.getColumnIndex()).label();
+		    				IStatusLineManager statusLine = getEditorSite().getActionBars().getStatusLineManager();
+				            statusLine.setMessage(waarde);
+		    			}
+		    		}
+		        	
+		        }
+		      }
+		    });
 
 		int index = addPage(tree);
 		setPageText(index, "Document");
@@ -116,8 +126,10 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	private void initTreeContent() {
 		treeContentProvider = new VektisEditorContentProvider();
 		treeViewer.setContentProvider(treeContentProvider);
-		treeViewer.setLabelProvider(new VektisEditorLabelProvider());
 		treeViewer.setCellModifier(new VektisEditorCellModifier(this,treeViewer));
+		ColumnViewerToolTipSupport.enableFor(treeViewer); 
+		treeViewer.setLabelProvider(new VektisEditorCellLabelProvider(editor,treeViewer));
+		
 		
 		//treeViewer.setInput(new Bericht());
 		treeViewer.getTree().getDisplay().asyncExec(new Runnable() {
@@ -246,23 +258,8 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 		setPageText(0, editor.getTitle());
 		setInput(editor.getEditorInput());
 	}
-	/* (non-Javadoc)
-	 * Method declared on IEditorPart
-	 */
-	public void gotoMarker(IMarker marker) {
-		setActivePage(0);
-		IDE.gotoMarker(getEditor(0), marker);
-	}
-	/**
-	 * The <code>MultiPageEditorExample</code> implementation of this method
-	 * checks that the input is an instance of <code>IFileEditorInput</code>.
-	 */
-	public void init(IEditorSite site, IEditorInput editorInput)
-		throws PartInitException {
-		if (!(editorInput instanceof IFileEditorInput))
-			throw new PartInitException("Invalid Input: Must be IFileEditorInput");
-		super.init(site, editorInput);
-	}
+	
+	
 	/* (non-Javadoc)
 	 * Method declared on IEditorPart.
 	 */
