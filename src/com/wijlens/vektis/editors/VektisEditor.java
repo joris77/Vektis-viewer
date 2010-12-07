@@ -185,8 +185,6 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 		}
 	}
 	
-	
-	
 	@Override
 	protected void handlePropertyChange(int propertyId) {
 		if(propertyId == IEditorPart.PROP_DIRTY){
@@ -194,8 +192,6 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 		}
 		super.handlePropertyChange(propertyId);
 	}
-	
-	
 	
 	@Override
 	public boolean isDirty() {
@@ -205,14 +201,13 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 	protected void pageChange(int newPageIndex){
 		switch(newPageIndex){
 		case 0 :
-			if(isDirty()){
+			if(isPageModified){
 				updateTextEditorFromTree();
 			}
 			break;
 		case 1 :
-			if(isPageModified){
-				updateTreeFromTextEditor();
-				
+			if(isDirty()){
+				updateTreeFromTextEditor();	
 			}
 			break;
 		}
@@ -244,7 +239,7 @@ public class VektisEditor extends MultiPageEditorPart implements IResourceChange
 		if(getActivePage()== 1 && isPageModified){
 			updateTextEditorFromTree();
 		}
-		isPageModified =false;
+		isPageModified = false;
 	}
 	/**
 	 * Saves the multi-page editor's document as another file.
